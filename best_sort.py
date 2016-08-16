@@ -40,9 +40,9 @@ def merge_sort(items):
                 r += 1
             else:
                 raise Exception('Could not merge, sub arrays sizes do not match the main array')
-def quick_sort(items):
+def quick_sort(items,k=1):
     """ Implementation of quick sort """
-    if len(items) > 1:
+    if len(items) > k:
         pivot_index = len(items) / 2
         smaller_items = []
         larger_items = []
@@ -54,8 +54,8 @@ def quick_sort(items):
                 else:
                     larger_items.append(val)
  
-        quick_sort(smaller_items)
-        quick_sort(larger_items)
+        quick_sort(smaller_items, k)
+        quick_sort(larger_items, k)
         items[:] = smaller_items + [items[pivot_index]] + larger_items
  
 def heap_sort(items):
@@ -84,18 +84,25 @@ def gapInsertionSort(alist,start,gap):
 
         alist[position]=currentvalue
 
+def hybrid_sort(items, k):
+    quick_sort(items, k)
+    insertion_sort(items)
 
 class Counter():
     def __init__(self):
         self.c = 0
+        self.saves = 0
     def __repr__(self):
         return self.__str__()
     def __str__(self):
         return str(self.c)
     def up(self):
         self.c += 1
+    def upSaves(self):
+        self.saves += 1
     def reset(self):
         self.c = 0
+        self.saves = 0
     def count(self):
         return self.c
 class MyNumber():
@@ -109,6 +116,8 @@ class MyNumber():
         if not self.cache.exists(self.n, other.n):
             self.cache.set(self.n, other.n)
             self.counter.up()
+        else:
+            self.counter.upSaves()
         return self.n - other.n
     def __repr__(self):     
         return self.__str__()
@@ -126,7 +135,7 @@ class Sort():
         new_list = [MyNumber(i, self.counter, self.cache) for i in items]
         self.sort(new_list)
     def report(self):
-        print "%s has %d comparisons" % (self.name, self.counter.count())
+        print "%s has %d comparisons with %d cache saves" % (self.name, self.counter.count(), self.counter.saves)
     def count(self):
         return self.counter.count()
     def store(self):
@@ -173,7 +182,7 @@ def shuffle(n_list):
     return new_list
 
 def main():
-    cache = NumCache(True)
+    cache = NumCache(False)
     sorts = [
         Sort('Bubble', bubble_sort, cache),
         Sort('Insertion', insertion_sort, cache),
@@ -181,6 +190,10 @@ def main():
         Sort('Quick', quick_sort, cache),
         Sort('Heap', heap_sort, cache),
         Sort('Shell', shell_sort, cache),
+        # Sort('Hybrid5', lambda x: hybrid_sort(x, 5), cache),
+        # Sort('Hybrid6', lambda x: hybrid_sort(x, 5), cache),
+        # Sort('Hybrid7', lambda x: hybrid_sort(x, 5), cache),
+        # Sort('Hybrid8', lambda x: hybrid_sort(x, 5), cache),
     ]
 
     original_list = [random.randint(0, 1000000) for c in range(100)]
@@ -198,5 +211,10 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # l = [random.randint(0, 100) for c in range(21)]
+    # quick_sort(l, 3)
+    # print l
+
+
 
 
