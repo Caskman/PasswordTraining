@@ -93,13 +93,18 @@ class Session():
         )
 
 class Cache():
-    def __init__(self, cache):
+    def __init__(self, cache, disabled):
         self.cache = cache
+        self.disabled = True
     def get_comparison_string(self, password_a, password_b):
         return "%s < %s" % (str(password_a), str(password_b))
     def exists(self, password_a, password_b):
+        if self.disabled:
+            return False
         return self.get_comparison_string(password_a, password_b) in self.cache
     def get(self, password_a, password_b):
+        if self.disabled:
+            return None
         return self.cache[self.get_comparison_string(password_a, password_b)]
     def set(self, password_a, password_b, val):
         key = self.get_comparison_string(password_a, password_b)
@@ -142,14 +147,15 @@ class Subarray():
 # Functions
 #============================================================
 
-def get_cache():
+def get_cache(disabled=False):
     serialized_cache = SESSION_REPO.get_cache()
     cache = json.loads(serialized_cache)
-    return Cache(cache)
+    return Cache(cache, disabled)
 
 def save_cache(cache):
-    serialized_cache = json.dumps(cache.cache, indent=4)
-    SESSION_REPO.save_cache(serialized_cache)
+    if not cache.disabled:
+        serialized_cache = json.dumps(cache.cache, indent=4)
+        SESSION_REPO.save_cache(serialized_cache)
 
 def init_cache():
     cache = Cache({})
@@ -183,6 +189,55 @@ def get_next_subarray_pair(subarrays):
         if curr.level == next.level:
             return (curr, next)
 
+def flatten_subarrays(subarrays):
+    passwords = []
+    for subarray in subarrays:
+        passwords.extend(subarray.elements)
+    return passwords
+
+special_log_status = '=' * 30
+def log_status(msg):
+    special_log_status += msg
+
+def dump_log_status():
+    print special_log_status
+    special_log_status = '=' * 30
+
+def output_session(subarrays, subarray1, subarray2, new_subarray):
+    print '=' * 40
+    print 'Sub Arrays'
+    def stringify_subarray(subarray):
+        nums = map(lambda x: x.password, subarray.elements)
+        str_result = ''
+        first = True
+        for n in nums:
+            comma = ', '
+            if first:
+                comma = ''
+                first = False
+            str_result += comma + str(n)
+        return '|%s|' % str_result
+    str_subarrays = map(stringify_subarray, subarrays)
+    result = ''
+    first = True
+    for s in str_subarrays:
+        space = ' '
+        if first:
+            first = False
+            space = ''
+        result += space + s
+    print '\t' + result
+
+    print 'Working Subarrays'
+    s1 = stringify_subarray(subarray1)
+    s2 = stringify_subarray(subarray2)
+    print '\tS1: %s === S2: %s' % (s1, s2)
+
+    print 'New Subarray'
+    print '\t' + stringify_subarray(new_subarray)
+
+
+
 GET_NEXT_MODE = "GET_NEXT"
 VALIDATE_NEXT_COMPARISON_MODE = "VALIDATE_NEXT_COMPARISON"
 INTERMEDIATE_STATE_MODE = "INTERMEDIATE_STATE_MODE"
@@ -197,7 +252,7 @@ if in get next mode, will return the next comparison object or the final array i
 all necessary comparisons exist in the session
 if in comparison validation mode, will return a boolean indicating whether 
 the test comparison object is a valid next comparison object for the session"""
-def main_algorithm(mode, session, test_comparison_object=None):
+def main_algorithm(mode, session, test_comparison_object=None, verbose=False):
     if mode not in modes:
         raise Exception("The fuck is this mode???")
     if session == None:
@@ -206,21 +261,16 @@ def main_algorithm(mode, session, test_comparison_object=None):
         raise Exception("Dude where's my comparison object?")
 
     # acquire cache object for skipping unnecessary comparisons
-    cache = get_cache()
+    cache = get_cache(disabled=True)
     # convert all passwords into length 1 subarrays to begin merge sort
     subarrays = [Subarray([password], 1) for password in session.passwords]
     # copy the comparisons array so we can whittle down the list of comparisons
     comps = [c for c in session.comparisons]
-
     # the eventual comparison object to be returned
     comparison = None
     # continue sorting until we've found the next comparison that the user needs to give us
     # or until we've whittled it all down to the final array
     while comparison == None and len(subarrays) > 1:
-        # print '=' * 50
-        # print 'Subarrays'
-        # print '=' * 50
-        # print str(subarrays)
         # find the next pair of equal level subarrays to merge
         pair = get_next_subarray_pair(subarrays)
         # unpack the subarrays
@@ -234,23 +284,24 @@ def main_algorithm(mode, session, test_comparison_object=None):
         # keep merging until we've either found the next comparison to be made
         # or until one of the two subarrays is empty
         while comparison == None and not subarray1.isempty() and not subarray2.isempty():
-            # alg_status = ''
+            if verbose:
+                output_session(subarrays, subarray1, subarray2, new_subarray)
             # push the winning password onto the new 
             # subarray and pull the next one off of its subarray
             def forward(result):
                 if result < 0:
-                    # alg_status += 'p1 is better; '
+                    # log_status('p1 is better; ')
                     new_subarray.elements.append(subarray1.pop())
                     p1 = subarray1.peek_without_consequences()
                 elif result > 0:
-                    # alg_status += 'p2 is better; '
+                    # log_status('p2 is better; ')
                     new_subarray.elements.append(subarray2.pop())
                     p2 = subarray2.peek_without_consequences()
                 else:
                     raise Exception("Why the fuck is this comparison object's result shit?!?!?!")
             # if there's still comparisons left, apply them to the sort until there's no more
             if len(comps) > 0: 
-                # alg_status += 'Comps left; '
+                # log_status('Comps left; ')
                 # get the next comparison to execute
                 comp = comps.pop(0)
                 # verify that the comparison matches the next passwords that need to be compared
@@ -264,17 +315,21 @@ def main_algorithm(mode, session, test_comparison_object=None):
             # if we're in comparison validation mode, return whether or not the 
             # test comparison object is a valid next comparison object
             elif mode == VALIDATE_NEXT_COMPARISON_MODE:
-                # alg_status += 'validating; '
+                # log_status('validating; ')
                 c = test_comparison_object
                 return c.id_a == p1.id and c.id_b == p2.id
+            # in intermediate state mode, we want to return the status of the sorting by
+            # returning the array itself in its current state, regardless if it's sorted or not
+            elif mode == INTERMEDIATE_STATE_MODE:
+                output_session(subarrays, subarray1, subarray2, new_subarray)
             # since there's no comparisons left, let's try the cache to see if 
             # we can get lucky and execute some comparisons stored in there
             else:
-                # alg_status += 'No comps left/not validating; '
+                # log_status('No comps left/not validating; ')
                 # if we get a cache hit, we execute the comparison 
                 # and add it to the session's history of comparisons
                 if cache.exists(p1.password, p2.password):
-                    # alg_status += 'cache hit; '
+                    # log_status('cache hit; ')
                     result = cache.get(p1.password, p2.password)
                     forward(result)
                     cache_comparison = Comparison(p1.id, p2.id, result, True)
@@ -282,9 +337,9 @@ def main_algorithm(mode, session, test_comparison_object=None):
                 # with no cache hit, we have our next 
                 # comparison that needs to be resolved
                 else:
-                    # alg_status += 'cache miss; comparison generated; '
+                    # log_status('cache miss; comparison generated; ')
                     comparison = Comparison(p1.id, p2.id, None, False)
-            # print alg_status
+            # dump_log_status()
         # if the comparison wasn't found, that means we emptied one of the subarrays
         # two subarrays.  Now we need to empty the other subarray into the new subarray
         # and replace those two subarrays with the new subarray
@@ -306,8 +361,8 @@ def main_algorithm(mode, session, test_comparison_object=None):
     else:
         raise Exception("Why are you not returning anything?! Fuck!!!")
 
-def get_next_comparison(session):
-    return main_algorithm(GET_NEXT_MODE, session)
+def get_next_comparison(session, verbose=False):
+    return main_algorithm(GET_NEXT_MODE, session, verbose=verbose)
 
 def validate_next_comparison(session, comparison):
     return main_algorithm(VALIDATE_NEXT_COMPARISON_MODE, session, comparison)
@@ -323,15 +378,25 @@ def commit_next_comparison(session, comparison):
 def standard_num_comp(p1, p2):
     return p1.password - p2.password
 
-def test_main_algorithm(session=None, comparator=standard_num_comp):
+def output_intermediate_state(session):
+    main_algorithm(INTERMEDIATE_STATE_MODE, session)
+
+def test_main_algorithm(session=None, comparator=standard_num_comp, verbose=False):
     if session == None:
         session = create_fake_number_session()
     next = get_next_comparison(session)
     while isinstance(next, Comparison):
+        print '%s %s' % (next.id_a, next.id_b)
+        if verbose:
+            output_intermediate_state(session)
         if isinstance(next.id_a, int) and isinstance(next.id_b, int):
             n1 = filter(lambda x: x.id == next.id_a, session.passwords)[0]
             n2 = filter(lambda x: x.id == next.id_b, session.passwords)[0]
             next.result = n1.password - n2.password
+            if verbose:
+                print '=' * 50
+                print 'Comparison'
+                print '%d - %d --> %d' % (n1.password, n2.password, next.result)
             if validate_next_comparison(session, next):
                 session.comparisons.append(next)
             else:
@@ -353,12 +418,13 @@ def test_main_algorithm(session=None, comparator=standard_num_comp):
     print "Cache hits: %d" % len(cache_hits)
     return session
 
-
 if __name__ == '__main__':
 
-    session = get_session(744876)
+    session = get_session(795642)
     # session.comparisons = []
-    session = test_main_algorithm(session)
+    session = test_main_algorithm(session, verbose=True)
+
+    # 795642
 
     # session = create_fake_number_session(8)
     # save_session(session)
@@ -375,8 +441,3 @@ if __name__ == '__main__':
 
     # session = create_fake_number_session()
     # save_session(session)
-
-
-
-
-
