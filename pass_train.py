@@ -1,9 +1,10 @@
 import random
 import json
 import os
-import fs_sessions
+import fs_passtrain
+import soft_diceware
 
-SESSION_REPO = fs_sessions
+SESSION_REPO = fs_passtrain
 
 #=============================================
 # Persistent Entities
@@ -167,8 +168,15 @@ def gen_passwords(num):
 def generate_random_id():
     return random.randint(1, 1000000)
 
+def create_session():
+    passwords = soft_diceware.gen_passwords(32)
+    comparisons = []
+    session = Session(generate_random_id(), passwords, comparisons)
+    save_session(session)
+    return session
+
 def create_fake_number_session(num=128):
-    passwords = gen_passwords(num)
+    passwords = [Password(i + 1, v) for i, v in enumerate(gen_passwords(num))]
     comparisons = []
     return Session(generate_random_id(), passwords, comparisons)
 
