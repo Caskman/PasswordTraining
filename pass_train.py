@@ -1,10 +1,10 @@
 import random
 import json
 import os
-import fs_passtrain
+import pass_train_fs
 import soft_diceware
 
-SESSION_REPO = fs_passtrain
+SESSION_REPO = pass_train_fs
 
 #=============================================
 # Persistent Entities
