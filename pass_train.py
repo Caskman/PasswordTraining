@@ -1,10 +1,10 @@
 import random
 import json
 import os
-import pass_train_fs
-import soft_diceware
+import fs_repo
+import diceware
 
-SESSION_REPO = pass_train_fs
+REPO = fs_repo
 
 #=============================================
 # Persistent Entities
@@ -149,14 +149,14 @@ class Subarray():
 #============================================================
 
 def get_cache(disabled=False):
-    serialized_cache = SESSION_REPO.get_cache()
+    serialized_cache = REPO.get_cache()
     cache = json.loads(serialized_cache)
     return Cache(cache, disabled)
 
 def save_cache(cache):
     if not cache.disabled:
         serialized_cache = json.dumps(cache.cache, indent=4)
-        SESSION_REPO.save_cache(serialized_cache)
+        REPO.save_cache(serialized_cache)
 
 def init_cache():
     cache = Cache({})
@@ -169,11 +169,14 @@ def generate_random_id():
     return random.randint(1, 1000000)
 
 def create_session():
-    passwords = soft_diceware.gen_passwords(32)
+    passwords = diceware.gen_passwords(32)
     comparisons = []
     session = Session(generate_random_id(), passwords, comparisons)
     save_session(session)
     return session
+
+def list_sessions():
+    return REPO.list_sessions()
 
 def create_fake_number_session(num=128):
     passwords = [Password(i + 1, v) for i, v in enumerate(gen_passwords(num))]
@@ -182,10 +185,10 @@ def create_fake_number_session(num=128):
 
 def save_session(session):
     dict_session = session.encode()
-    SESSION_REPO.write(session, json.dumps(dict_session, indent=4))
+    REPO.write(session, json.dumps(dict_session, indent=4))
 
 def get_session(id):
-    serialized_session = SESSION_REPO.read(id)
+    serialized_session = REPO.read(id)
     dict_session = json.loads(serialized_session)
     session = Session.decode(dict_session)
     return session
@@ -205,8 +208,6 @@ def flatten_subarrays(subarrays):
     return passwords
 
 special_log_status = '=' * 30
-
-
 def log_status(msg):
     special_log_status += msg
 
