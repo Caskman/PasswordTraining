@@ -1,2 +1,2 @@
 DEBUG=True
-NAME=PasswordTraining
+NAME='PasswordTraining'
