@@ -405,7 +405,11 @@ def main_algorithm(mode, session, test_comparison_object=None, verbose=False, lo
 # ================================================================================
 
 def setup():
-    
+    if not os.path.isfile('cache.json'):
+        with open('cache.json', 'w') as fout:
+            fout.write('{}')
+    if not os.path.isdir('sessions'):
+        os.mkdir('sessions')
 
 def create_comparison(session, password1, password2, result):
     id_a = filter(lambda x: x.password == password1,session.passwords)[0].id
@@ -490,7 +494,8 @@ def test_main_algorithm(session=None, comparator=standard_num_comp, verbose=Fals
 
 if __name__ == '__main__':
 
-    print get_session(458222)
+    setup()
+    # print get_session(458222)
 
     # print REPO.list_sessions()
 
