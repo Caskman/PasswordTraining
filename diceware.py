@@ -8,10 +8,11 @@ def get_diceware_list():
     contents = REPO.get_diceware_file_contents()
     lines = contents.split('\n')
     def _reduce(obj, line):
-        splits = line.split('\t')
-        obj[splits[0]] = splits[1]
+        if line != None and line != '':
+            splits = line.split('\t')
+            obj[splits[0]] = splits[1]
         return obj
-    dictionary = reduce(_reduce, lines)
+    dictionary = reduce(_reduce, lines, {})
     return dictionary
 
 def gen_diceware_key():
@@ -38,6 +39,8 @@ def gen_passwords(count, num_words=4):
     results = []
     diceware_list = get_diceware_list()
     passwords = [gen_password(num_words, diceware_list) for i in range(count)]
+    return passwords
 
-
-
+if __name__ == '__main__':
+    # print get_diceware_list()
+    print gen_passwords(32)

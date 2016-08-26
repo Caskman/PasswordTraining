@@ -30,7 +30,7 @@ class Password():
     def decode(d):
         return Password(
             int(d["id"]),
-            int(d["password"]),
+            d["password"],
         )
 
 class Comparison():
@@ -168,30 +168,10 @@ def gen_passwords(num):
 def generate_random_id():
     return random.randint(1, 1000000)
 
-def create_session():
-    passwords = diceware.gen_passwords(32)
-    comparisons = []
-    session = Session(generate_random_id(), passwords, comparisons)
-    save_session(session)
-    return session
-
-def list_sessions():
-    return REPO.list_sessions()
-
 def create_fake_number_session(num=128):
     passwords = [Password(i + 1, v) for i, v in enumerate(gen_passwords(num))]
     comparisons = []
     return Session(generate_random_id(), passwords, comparisons)
-
-def save_session(session):
-    dict_session = session.encode()
-    REPO.write(session, json.dumps(dict_session, indent=4))
-
-def get_session(id):
-    serialized_session = REPO.read(id)
-    dict_session = json.loads(serialized_session)
-    session = Session.decode(dict_session)
-    return session
 
 def get_next_subarray_pair(subarrays):
     for i in range(len(subarrays) - 1):
@@ -321,7 +301,7 @@ def main_algorithm(mode, session, test_comparison_object=None, verbose=False, lo
         p2 = subarray2.peek()
         log_it('Beginning another merge')
         log_it('S1: %s S2: %s' % (stringify_subarray(subarray1), stringify_subarray(subarray2)))
-        log_it('p1: %d p2: %d' % (p1.password, p2.password))
+        log_it('p1: %s p2: %s' % (str(p1.password), str(p2.password)))
         # keep merging until we've either found the next comparison to be made
         # or until one of the two subarrays is empty
         while comparison == None and not subarray1.isempty() and not subarray2.isempty():
@@ -416,9 +396,34 @@ def main_algorithm(mode, session, test_comparison_object=None, verbose=False, lo
         return comparison
     # Since we're now left with the final array, return the array
     elif len(subarrays) == 1:
-        return subarrays[0]
+        return subarrays[0].elements
     else:
         raise Exception("Why are you not returning anything?! Fuck!!!")
+
+# ================================================================================
+# Public Functions
+# ================================================================================
+
+def create_comparison(session, password1, password2, result):
+    id_a = filter(lambda x: x.password == password1,session.passwords)[0].id
+    id_b = filter(lambda x: x.password == password2,session.passwords)[0].id
+    return Comparison(id_a, id_b, result, False)
+
+def create_session():
+    passwords = [Password(i + 1, p) for i, p in enumerate(diceware.gen_passwords(32))]
+    comparisons = []
+    session = Session(generate_random_id(), passwords, comparisons)
+    return session
+
+def save_session(session):
+    dict_session = session.encode()
+    REPO.write(session, json.dumps(dict_session, indent=4))
+
+def get_session(id):
+    serialized_session = REPO.read(id)
+    dict_session = json.loads(serialized_session)
+    session = Session.decode(dict_session)
+    return session
 
 def get_next_comparison(session, verbose=False):
     return main_algorithm(GET_NEXT_MODE, session, verbose=verbose)
@@ -433,6 +438,13 @@ def commit_next_comparison(session, comparison):
         return True
     else:
         return False
+
+def list_sessions():
+    return REPO.list_sessions()
+
+# ================================================================================
+# Test Functions
+# ================================================================================
 
 def standard_num_comp(p1, p2):
     return p1.password - p2.password
@@ -475,9 +487,13 @@ def test_main_algorithm(session=None, comparator=standard_num_comp, verbose=Fals
 
 if __name__ == '__main__':
 
-    session = create_fake_number_session(32)
+    print get_session(458222)
+
+    # print REPO.list_sessions()
+
+    # session = create_fake_number_session(32)
     # session = get_session(795642)
-    session = test_main_algorithm(session, verbose=False)
+    # session = test_main_algorithm(session, verbose=False)
 
     # import os
     # print 'Working Dir'

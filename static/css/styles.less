@@ -1,0 +1,74 @@
+body {
+    background-color: #F4F5F6;
+    color: #606C76;
+    .main-container {
+        position: relative;
+        margin: 20px;
+        .hidden {
+            display: none;
+        }
+        .session-list {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            .session-item {
+
+            }
+        }
+        .password-container {
+            font-size: 24px;
+            width: 85%;
+            float: right;
+            position: relative;
+            .first-pass {
+                position: absolute;
+                left: 20px;
+                top: 50px;
+            }
+            .second-pass {
+                position: absolute;
+                right: 20px;
+                top: 50px;
+            }
+        }
+    }
+    .btn {
+        cursor: pointer;
+        padding: 2px 10px;
+        text-align: center;
+
+        height: auto;
+        display: block;
+        font-size: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+        text-decoration: inherit;
+        white-space: inherit;
+        border: none;
+        box-sizing: inherit;
+        border-radius: 0px;
+        margin: 0px auto;
+
+        -webkit-user-select: none; /* Chrome/Safari */        
+        -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* IE10+ */
+        user-select: none;
+
+        &.selected {
+            background-color: #ccc;
+        }
+
+        &:hover {
+            background-color: #666;
+            color: #eee;
+        }
+        &:focus {
+            background-color: #ddd;
+        }
+        &:hover:focus {
+            color: #555;
+        }
+    }
+}
