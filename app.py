@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request
 import pass_train
 import json
-app = Flask(__name__)
+import pass_train_config
+
+app = Flask(pass_train_config.NAME)
 
 class InvalidUsage(Exception):
     status_code = 400
@@ -76,4 +78,4 @@ def post_new_comparison():
     else:
         raise InvalidUsage('Comparison invalid', )
 
-app.run(debug=True)
+app.run(debug=pass_train_config.DEBUG)
