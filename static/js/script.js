@@ -80,6 +80,7 @@ var PasswordTrainingApp = React.createClass({
             dataType: 'json',
             type: 'POST',
             success: function(sessionId) {
+                this.getSessionList();
                 this.switchSession(sessionId);
             }.bind(this),
             error: function(e) {
