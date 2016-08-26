@@ -404,6 +404,9 @@ def main_algorithm(mode, session, test_comparison_object=None, verbose=False, lo
 # Public Functions
 # ================================================================================
 
+def setup():
+    
+
 def create_comparison(session, password1, password2, result):
     id_a = filter(lambda x: x.password == password1,session.passwords)[0].id
     id_b = filter(lambda x: x.password == password2,session.passwords)[0].id

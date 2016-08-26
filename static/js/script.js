@@ -61,7 +61,7 @@ var PasswordTrainingApp = React.createClass({
             }),
             contentType: "application/json",
             success: function() {
-                this.getNextComparison();
+                this.getNextComparison(this.state.currentSessionId);
             }.bind(this),
             error: function(e) {
                 console.error(e);
