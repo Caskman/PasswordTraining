@@ -78,4 +78,9 @@ def post_new_comparison():
     else:
         raise InvalidUsage('Comparison invalid', )
 
-app.run(debug=pass_train_config.DEBUG)
+config = pass_train_config
+app.run(
+    debug=config.DEBUG,
+    host=config.HOST,
+    port=config.PORT
+)
